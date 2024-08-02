@@ -73,26 +73,41 @@ public class WeChatPayUtil {
     }
 
     /**
-     * 发送post方式请求
+     * 发送POST请求方法
      *
-     * @param url
-     * @param body
-     * @return
+     * 此方法用于向指定URL发送POST请求它设置了一些必要的请求头，
+     * 并将请求体作为字符串传递它使用HttpClient库来执行HTTP请求
+     *
+     * @param url 请求的URL地址
+     * @param body 请求体，通常是一个JSON字符串
+     * @return 返回请求的响应体作为字符串
+     * @throws Exception 如果在执行请求或处理响应时发生错误
      */
     private String post(String url, String body) throws Exception {
+        // 获取HttpClient客户端实例
         CloseableHttpClient httpClient = getClient();
 
+        // 创建一个HttpPost对象，并设置请求URL
         HttpPost httpPost = new HttpPost(url);
+
+        // 添加请求头，指定接受的内容类型为JSON
         httpPost.addHeader(HttpHeaders.ACCEPT, ContentType.APPLICATION_JSON.toString());
+        // 设置请求体的内容类型为JSON
         httpPost.addHeader(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.toString());
+        // 添加微信支付序列号请求头
         httpPost.addHeader("Wechatpay-Serial", weChatProperties.getMchSerialNo());
+
+        // 将请求体作为StringEntity设置到HttpPost对象中，并指定字符集为UTF-8
         httpPost.setEntity(new StringEntity(body, "UTF-8"));
 
+        // 执行HTTP请求并获取响应
         CloseableHttpResponse response = httpClient.execute(httpPost);
         try {
+            // 读取响应体并将其转换为字符串
             String bodyAsString = EntityUtils.toString(response.getEntity());
             return bodyAsString;
         } finally {
+            // 关闭HttpClient和HttpResponse，释放资源
             httpClient.close();
             response.close();
         }

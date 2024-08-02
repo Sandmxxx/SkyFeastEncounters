@@ -49,5 +49,8 @@ public interface EmployeeService {
     void update(EmployeeDTO employeeDTO);
 
 
-
+    /**
+     * 员工退出
+     */
+    void logout();
 }

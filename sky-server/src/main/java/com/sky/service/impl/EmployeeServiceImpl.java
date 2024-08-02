@@ -22,18 +22,30 @@ import com.sky.utils.JwtUtil;
 import io.jsonwebtoken.Claims;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
 
     @Autowired
     private EmployeeMapper employeeMapper;
+
+    @Autowired
+    private HttpServletRequest request;
+
+    @Autowired
+    private JwtProperties jwtProperties;
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
 
     /**
@@ -148,6 +160,22 @@ public class EmployeeServiceImpl implements EmployeeService {
         //employee.setUpdateUser(BaseContext.getCurrentId());
         //employee.setUpdateTime(LocalDateTime.now());
         employeeMapper.update(employee);
+    }
+
+    @Override
+    public void logout() {
+        // 获取jwt令牌
+        String jwt = request.getHeader("token");
+        Claims claims = JwtUtil.parseJWT(jwtProperties.getAdminSecretKey(), jwt);
+        // 获取过期时间
+        Date expiration = claims.getExpiration();
+        // 计算剩余过期时间
+        long remainingTime = expiration.getTime() - new Date().getTime();
+        // 转成秒
+        long seconds = remainingTime / 1000;
+        // 保存到redis
+        String key = "EXPIRATION_JWT" + ":" + jwt;
+        redisTemplate.opsForValue().set(key, "", seconds, TimeUnit.SECONDS);
     }
 
 }

@@ -11,6 +11,7 @@ import com.sky.result.Result;
 import com.sky.service.EmployeeService;
 import com.sky.utils.JwtUtil;
 import com.sky.vo.EmployeeLoginVO;
+import io.jsonwebtoken.Claims;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -74,6 +77,8 @@ public class EmployeeController {
     @PostMapping("/logout")
     @ApiOperation(value = "员工退出")
     public Result<String> logout() {
+        log.info("退出登录");
+        employeeService.logout();
         return Result.success();
     }
 

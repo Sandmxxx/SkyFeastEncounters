@@ -7,12 +7,14 @@ import com.sky.utils.JwtUtil;
 import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Date;
 
 /**
  * jwt令牌校验的拦截器
@@ -21,8 +23,13 @@ import javax.servlet.http.HttpServletResponse;
 @Slf4j
 public class JwtTokenAdminInterceptor implements HandlerInterceptor {
 
+    private static final String EXPIRATION_JWT = "EXPIRATION_JWT";
+
     @Autowired
     private JwtProperties jwtProperties;
+
+    @Autowired
+    private RedisTemplate<String,Object> redisTemplate;
 
 
     /**
@@ -48,8 +55,17 @@ public class JwtTokenAdminInterceptor implements HandlerInterceptor {
         try {
             log.info("jwt校验:{}", token);
             Claims claims = JwtUtil.parseJWT(jwtProperties.getAdminSecretKey(), token);
+
+            // 判断是否退出了登录（即jwt是否在redis中）
+            String key = EXPIRATION_JWT + ":" + token;
+            if (redisTemplate.hasKey(key)) {
+                log.info("令牌已过期，退出登录");
+                throw new Exception("已退出登录");
+            }
+
             Long empId = Long.valueOf(claims.get(JwtClaimsConstant.EMP_ID).toString());
             log.info("当前员工id：{}", empId);
+
             // 将用户id存储到threadlocal线程中
             BaseContext.setCurrentId(empId);
             //3、通过，放行
